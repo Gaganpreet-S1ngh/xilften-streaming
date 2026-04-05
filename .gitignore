@@ -1,0 +1,80 @@
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# =========================
+# ENV FILES (IMPORTANT)
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# LOGS
+# =========================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# FRONTEND (Next.js)
+# =========================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/.turbo/
+frontend/.vercel/
+
+# Next.js misc
+frontend/next-env.d.ts
+
+# =========================
+# BACKEND (Go)
+# =========================
+backend/bin/
+backend/tmp/
+backend/vendor/   # ignore ONLY if you're NOT vendoring deps
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# =========================
+# COVERAGE / TEST
+# =========================
+coverage/
+*.coverprofile
+
+# =========================
+# DOCKER
+# =========================
+docker-compose.override.yml
+
+# =========================
+# NGINX (optional)
+# =========================
+nginx/logs/
+nginx/*.log
+
+# =========================
+# CACHE
+# =========================
+.cache/
+tmp/
