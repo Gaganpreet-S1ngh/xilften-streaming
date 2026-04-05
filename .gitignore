@@ -32,6 +32,7 @@ frontend/out/
 frontend/build/
 frontend/.turbo/
 frontend/.vercel/
+frontend/.next/cache/
 
 # Next.js misc
 frontend/next-env.d.ts
@@ -39,9 +40,13 @@ frontend/next-env.d.ts
 # =========================
 # BACKEND (Go)
 # =========================
-backend/bin/
-backend/tmp/
-backend/vendor/   # ignore ONLY if you're NOT vendoring deps
+backend/streaming_service/bin/
+backend/streaming_service/tmp/
+backend/streaming_service/vendor/
+
+backend/streaming_service/**/*.exe
+backend/streaming_service/**/*.out
+backend/streaming_service/**/main
 
 # Go build artifacts
 *.exe
