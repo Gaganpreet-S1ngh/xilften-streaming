@@ -1,4 +1,4 @@
-package streaming
+package user
 
 import (
 	"net/http"
@@ -38,7 +38,5 @@ func (r *routes) SetupPublicRoutes() {
 			"time":   time.Now().UTC(),
 		})
 	})
-
-	r.ginEngine.GET("/movies", r.handler.GetMoviesHandler)
 
 }

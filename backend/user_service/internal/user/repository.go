@@ -1,4 +1,4 @@
-package streaming
+package user
 
 import (
 	"context"
@@ -11,7 +11,6 @@ import (
 )
 
 type Repository interface {
-	GetMovies(ctx context.Context, limit int, offset int) ([]*Movie, error)
 }
 
 type repository struct {
@@ -28,24 +27,6 @@ func NewRepository(db *bun.DB, logger *zap.Logger) Repository {
 		maxRetries: 3,
 		retryDelay: 1 * time.Second,
 	}
-}
-
-// GetMovies implements [Repository].
-func (r *repository) GetMovies(ctx context.Context, limit int, offset int) ([]*Movie, error) {
-	var movies []*Movie
-
-	err := r.executeWithRetry(ctx, func() error {
-		return r.db.NewSelect().Model(&movies).Order("created_at DESC").
-			Limit(limit).
-			Offset(offset).
-			Scan(ctx)
-	}, "Get Movies")
-
-	if err != nil {
-		return nil, err
-	}
-
-	return movies, nil
 }
 
 //==========================================//

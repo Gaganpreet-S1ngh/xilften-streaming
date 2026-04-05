@@ -1,9 +1,6 @@
-package streaming
+package user
 
 import (
-	"net/http"
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,26 +12,6 @@ func NewHandler(svc Service) *Handler {
 	return &Handler{
 		svc: svc,
 	}
-}
-
-func (h *Handler) GetMoviesHandler(c *gin.Context) {
-	limitStr := c.Query("limit")
-	offsetStr := c.Query("offset")
-
-	// Convert to int
-
-	limit, _ := strconv.Atoi(limitStr)
-	offset, _ := strconv.Atoi(offsetStr)
-
-	// Create timeout context as a child of req context
-
-	movies, err := h.svc.GetMovies(c.Request.Context(), limit, offset)
-	if err != nil {
-		fail(c, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	success(c, http.StatusOK, movies)
 }
 
 //==========================================//

@@ -10,10 +10,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/platform/config"
-	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/platform/database"
-	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/platform/httpserver"
-	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/streaming"
+	"github.com/Gaganpreet-S1ngh/xilften-user-service/internal/platform/config"
+	"github.com/Gaganpreet-S1ngh/xilften-user-service/internal/platform/database"
+	"github.com/Gaganpreet-S1ngh/xilften-user-service/internal/platform/httpserver"
+	"github.com/Gaganpreet-S1ngh/xilften-user-service/internal/user"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -25,7 +25,7 @@ func main() {
 
 	/* INITIALIZE SERVICES */
 
-	// DATABASE
+	// DATABASE (SQL)
 	db := database.NewSQLDatabase(cfg.Logger)
 
 	if err := db.Connect(rootCtx, cfg.DatabaseDSN); err != nil {
@@ -33,20 +33,31 @@ func main() {
 	}
 
 	if err := db.RegisterModels(rootCtx,
-		(*streaming.MovieGenre)(nil), (*streaming.Movie)(nil),
-		(*streaming.Genre)(nil)); err != nil {
+		(*user.UserGenre)(nil), (*user.User)(nil),
+		(*user.Genre)(nil)); err != nil {
 		cfg.Logger.Warn("Error creating tables!", zap.Error(err))
 	}
 
+	// DATABASE (REDIS)
+	redisDB := database.NewRedisDatabase(cfg.Logger)
+
+	if err := redisDB.Connect(rootCtx, cfg.RedisDSN); err != nil {
+		log.Fatal("Redis Database connection failed!", zap.Error(err))
+	}
+
+	if err := redisDB.Ping(rootCtx); err != nil {
+		log.Println(err)
+	}
+
 	// DEPENDENCY INJECTIONS
-	repository := streaming.NewRepository(db.GetDBClient(), cfg.Logger)
-	service := streaming.NewService(repository, cfg.Logger)
-	handler := streaming.NewHandler(service)
+	repository := user.NewRepository(db.GetDBClient(), cfg.Logger)
+	service := user.NewService(repository, cfg.Logger)
+	handler := user.NewHandler(service)
 
 	// GIN ENGINE
 	gin.SetMode(cfg.GinMode)
 	ginEngine := httpserver.NewGinEngine(cfg.Logger)
-	routes := streaming.NewRoutes(ginEngine, handler)
+	routes := user.NewRoutes(ginEngine, handler)
 
 	/* INITIALIZE ROUTES */
 
@@ -77,6 +88,8 @@ func main() {
 	rootCancel()
 
 	// Close Services
+	db.GetDBClient().Close()
+	redisDB.Close()
 	cfg.Logger.Sync()
 
 }
