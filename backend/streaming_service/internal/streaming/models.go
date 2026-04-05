@@ -56,4 +56,7 @@ type MovieGenre struct {
 
 	MovieID uuid.UUID `bun:"movie_id,pk,notnull"`
 	GenreID uuid.UUID `bun:"genre_id,pk,notnull"`
+
+	Movie *Movie `bun:"rel:belongs-to,join:movie_id=_id"`
+	Genre *Genre `bun:"rel:belongs-to,join:genre_id=_id"`
 }
