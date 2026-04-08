@@ -43,7 +43,7 @@ func Authenticate(a pkg.Auth) gin.HandlerFunc {
 
 // For stricter operations such that updating profile or placing order or etc we should verify if the token is revoked or not
 // So that even if someone steals the token the damage can be minimized until the access token is valid
-func AuthenticateWithSession(a pkg.Auth) gin.HandlerFunc {
+func AuthenticateWithSession(a pkg.Auth) gin.HandlerFunc {	
 	return func(c *gin.Context) {
 		tokenStr, err := extractBearerToken(c)
 		if err != nil {
