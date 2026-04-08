@@ -44,7 +44,6 @@ func (s *service) Login(ctx context.Context, userDetails UserLoginRequest, devic
 	}
 
 	// Verify password
-
 	if err := s.auth.VerifyPassword(userDetails.Password, existingUser.Password); err != nil {
 		return UserLoginResponse{}, err
 	}

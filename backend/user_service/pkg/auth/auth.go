@@ -114,6 +114,7 @@ func (a *auth) HashPassword(password string) (string, error) {
 
 func (a *auth) VerifyPassword(password string, hashed string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password))
+	log.Println()
 	if err != nil {
 		return fmt.Errorf("Error verifying the password : %w", err)
 	}
@@ -151,7 +152,7 @@ func (a *auth) GenerateAccessToken(userID string, sessionID string, email string
 		},
 	})
 
-	return token.SignedString(a.accessSecret)
+	return token.SignedString([]byte(a.accessSecret))
 }
 
 func (a *auth) GenerateRefreshToken(userID string, email string, userType string) (string, error) {
@@ -179,7 +180,7 @@ func (a *auth) GenerateRefreshToken(userID string, email string, userType string
 		},
 	})
 
-	return token.SignedString(a.refreshSecret)
+	return token.SignedString([]byte(a.refreshSecret))
 }
 
 //=================================//
@@ -195,7 +196,7 @@ func (a *auth) VerifyAccessToken(tokenStr string) (*Claims, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
-		return a.accessSecret, nil
+		return []byte(a.accessSecret), nil
 	})
 
 	if err != nil {
@@ -220,7 +221,7 @@ func (a *auth) VerifyRefreshToken(tokenStr string) (*Claims, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
-		return a.refreshSecret, nil
+		return []byte(a.refreshSecret), nil
 	})
 
 	if err != nil {

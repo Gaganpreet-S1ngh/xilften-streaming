@@ -42,7 +42,7 @@ func (r *routes) SetupPublicRoutes() {
 		})
 	})
 
-	r.ginEngine.GET("/auth/register", r.handler.Register)
-	r.ginEngine.GET("/auth/login", r.handler.Login)
+	r.ginEngine.POST("/auth/register", r.handler.Register)
+	r.ginEngine.POST("/auth/login", r.handler.Login)
 
 }

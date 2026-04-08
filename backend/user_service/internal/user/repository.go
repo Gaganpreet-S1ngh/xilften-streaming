@@ -99,7 +99,6 @@ func (r *repository) FindByEmail(ctx context.Context, email string) (*User, erro
 		return nil, fmt.Errorf("Error finding user with email (%s) : %w", email, err)
 	}
 
-	user.Password = ""
 	return user, nil
 }
 

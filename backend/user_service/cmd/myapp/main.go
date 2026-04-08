@@ -64,6 +64,7 @@ func main() {
 	/* INITIALIZE ROUTES */
 
 	routes.SetupPublicRoutes()
+	routes.SetupPrivateRoutes()
 
 	/* START SERVERS */
 
