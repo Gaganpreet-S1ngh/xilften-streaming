@@ -14,6 +14,7 @@ import (
 	"github.com/Gaganpreet-S1ngh/xilften-user-service/internal/platform/database"
 	"github.com/Gaganpreet-S1ngh/xilften-user-service/internal/platform/httpserver"
 	"github.com/Gaganpreet-S1ngh/xilften-user-service/internal/user"
+	pkg "github.com/Gaganpreet-S1ngh/xilften-user-service/pkg/auth"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -50,14 +51,15 @@ func main() {
 	}
 
 	// DEPENDENCY INJECTIONS
+	auth := pkg.NewAuth(redisDB.GetClient(), cfg.AccessSecret, cfg.RefreshSecret)
 	repository := user.NewRepository(db.GetDBClient(), cfg.Logger)
-	service := user.NewService(repository, cfg.Logger)
+	service := user.NewService(repository, cfg.Logger, auth)
 	handler := user.NewHandler(service)
 
 	// GIN ENGINE
 	gin.SetMode(cfg.GinMode)
 	ginEngine := httpserver.NewGinEngine(cfg.Logger)
-	routes := user.NewRoutes(ginEngine, handler)
+	routes := user.NewRoutes(ginEngine, handler, auth)
 
 	/* INITIALIZE ROUTES */
 

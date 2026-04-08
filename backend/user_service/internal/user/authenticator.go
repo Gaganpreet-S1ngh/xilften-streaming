@@ -1,4 +1,4 @@
-package httpserver
+package user
 
 import (
 	"context"
@@ -34,6 +34,7 @@ func Authenticate(a pkg.Auth) gin.HandlerFunc {
 		// Inject inside gin context
 		c.Set("claims", claims)
 		c.Set("user_id", claims.UserID)
+		c.Set("session_id", claims.SessionID)
 		c.Set("email", claims.Email)
 		c.Set("user_type", claims.UserType)
 
@@ -43,7 +44,7 @@ func Authenticate(a pkg.Auth) gin.HandlerFunc {
 
 // For stricter operations such that updating profile or placing order or etc we should verify if the token is revoked or not
 // So that even if someone steals the token the damage can be minimized until the access token is valid
-func AuthenticateWithSession(a pkg.Auth) gin.HandlerFunc {	
+func AuthenticateWithSession(a pkg.Auth) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenStr, err := extractBearerToken(c)
 		if err != nil {

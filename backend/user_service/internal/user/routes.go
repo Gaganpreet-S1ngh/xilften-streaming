@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	pkg "github.com/Gaganpreet-S1ngh/xilften-user-service/pkg/auth"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,18 +16,20 @@ type Routes interface {
 type routes struct {
 	ginEngine *gin.Engine
 	handler   *Handler
+	auth      pkg.Auth
 }
 
-func NewRoutes(ginEngine *gin.Engine, handler *Handler) Routes {
+func NewRoutes(ginEngine *gin.Engine, handler *Handler, auth pkg.Auth) Routes {
 	return &routes{
 		ginEngine: ginEngine,
 		handler:   handler,
+		auth:      auth,
 	}
 }
 
 // SetupPrivateRoutes implements [Routes].
 func (r *routes) SetupPrivateRoutes() {
-	panic("unimplemented")
+	r.ginEngine.GET("/auth/logout", Authenticate(r.auth), r.handler.Logout)
 }
 
 // SetupPublicRoutes implements [Routes].
@@ -38,5 +41,8 @@ func (r *routes) SetupPublicRoutes() {
 			"time":   time.Now().UTC(),
 		})
 	})
+
+	r.ginEngine.GET("/auth/register", r.handler.Register)
+	r.ginEngine.GET("/auth/login", r.handler.Login)
 
 }

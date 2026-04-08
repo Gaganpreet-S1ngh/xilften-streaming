@@ -17,7 +17,7 @@ type User struct {
 	Password  string    `bun:"password,notnull"`
 	Phone     string    `bun:"phone"`
 
-	UserType   string `bun:"user_type,default:'customer'"`
+	UserType   string `bun:"user_type,default:'user'"`
 	Code       string `bun:"code,default:'0'"`
 	IsVerified bool   `bun:"is_verified,default:false"`
 

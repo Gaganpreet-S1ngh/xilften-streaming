@@ -1,6 +1,8 @@
 package user
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,6 +14,51 @@ func NewHandler(svc Service) *Handler {
 	return &Handler{
 		svc: svc,
 	}
+}
+
+func (h *Handler) Register(c *gin.Context) {
+	var user UserRegisterRequest
+
+	if err := c.ShouldBindJSON(&user); err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userID, err := h.svc.Register(c.Request.Context(), user)
+
+	if err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	success(c, http.StatusOK, userID)
+}
+
+func (h *Handler) Login(c *gin.Context) {
+	var user UserLoginRequest
+
+	if err := c.ShouldBindJSON(&user); err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	userDetails, err := h.svc.Login(c.Request.Context(), user, "")
+
+	if err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	success(c, http.StatusOK, userDetails)
+}
+
+func (h *Handler) Logout(c *gin.Context) {
+	if err := h.svc.Logout(c.Request.Context(), c.GetString("session_id"), c.GetString("user_id")); err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	success(c, http.StatusOK, "User logged out successfully!")
 }
 
 //==========================================//

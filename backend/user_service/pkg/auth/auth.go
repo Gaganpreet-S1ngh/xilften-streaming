@@ -25,6 +25,7 @@ const (
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID    string `json:"user_id"`
+	SessionID string `json:"session_id"`
 	Email     string `json:"email"`
 	UserType  string `json:"user_type"`
 	TokenType string `json:"token_type"`
@@ -64,7 +65,7 @@ type Auth interface {
 	HashPassword(password string) (string, error)
 	VerifyPassword(password string, hashed string) error
 
-	GenerateAccessToken(userID string, email string, userType string) (string, error)
+	GenerateAccessToken(userID string, sessionID string, email string, userType string) (string, error)
 	GenerateRefreshToken(userID string, email string, userType string) (string, error)
 
 	VerifyAccessToken(tokenStr string) (*Claims, error)
@@ -124,7 +125,7 @@ func (a *auth) VerifyPassword(password string, hashed string) error {
 //      JWT TOKEN GENERATION       //
 //=================================//
 
-func (a *auth) GenerateAccessToken(userID string, email string, userType string) (string, error) {
+func (a *auth) GenerateAccessToken(userID string, sessionID string, email string, userType string) (string, error) {
 	if len(userID) == 0 {
 		return "", fmt.Errorf("Missing (User ID) to create token!")
 	}
@@ -137,6 +138,7 @@ func (a *auth) GenerateAccessToken(userID string, email string, userType string)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		UserID:    userID,
+		SessionID: sessionID,
 		Email:     email,
 		UserType:  userType,
 		TokenType: "access",
