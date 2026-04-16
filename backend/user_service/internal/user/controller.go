@@ -16,7 +16,7 @@ func NewHandler(svc Service) *Handler {
 	}
 }
 
-func (h *Handler) Register(c *gin.Context) {
+func (h *Handler) RegisterHandler(c *gin.Context) {
 	var user UserRegisterRequest
 
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -34,7 +34,7 @@ func (h *Handler) Register(c *gin.Context) {
 	success(c, http.StatusOK, userID)
 }
 
-func (h *Handler) Login(c *gin.Context) {
+func (h *Handler) LoginHandler(c *gin.Context) {
 	var user UserLoginRequest
 
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -52,7 +52,7 @@ func (h *Handler) Login(c *gin.Context) {
 	success(c, http.StatusOK, userDetails)
 }
 
-func (h *Handler) Logout(c *gin.Context) {
+func (h *Handler) LogoutHandler(c *gin.Context) {
 	if err := h.svc.Logout(c.Request.Context(), c.GetString("session_id"), c.GetString("user_id")); err != nil {
 		fail(c, http.StatusBadRequest, err.Error())
 		return

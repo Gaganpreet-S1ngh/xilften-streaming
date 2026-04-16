@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	pkg "github.com/Gaganpreet-S1ngh/xilften-user-service/pkg/auth"
 	"github.com/google/uuid"
@@ -13,6 +14,8 @@ type Service interface {
 	Register(ctx context.Context, userDetails UserRegisterRequest) (uuid.UUID, error)
 	Login(ctx context.Context, userDetails UserLoginRequest, deviceInfo any) (UserLoginResponse, error)
 	Logout(ctx context.Context, sessionID string, userID string) error
+	VerifyCode(ctx context.Context, userID string, verificationCode string) error
+	ForgotPassword(ctx context.Context, userEmail string) error
 }
 
 type service struct {
@@ -92,10 +95,13 @@ func (s *service) Register(ctx context.Context, userDetails UserRegisterRequest)
 	}
 
 	// Generate a verification Code
+	code := s.auth.GenVerificationCode()
+
 	newUser := &User{
 		Email:    userDetails.Email,
 		Password: hashedPassword,
 		Phone:    userDetails.Phone,
+		Code:     code,
 	}
 
 	userID, err := s.repository.Create(ctx, newUser)
@@ -110,3 +116,38 @@ func (s *service) Register(ctx context.Context, userDetails UserRegisterRequest)
 func (s *service) Logout(ctx context.Context, sessionID string, userID string) error {
 	return s.auth.RevokeSession(ctx, sessionID, userID)
 }
+
+// ForgotPassword implements [Service].
+func (s *service) ForgotPassword(ctx context.Context, userEmail string) error {
+	panic("unimplemented")
+}
+
+// VerifyCode implements [Service].
+func (s *service) VerifyCode(ctx context.Context, userID string, verificationCode string) error {
+	userUUID, err := uuid.Parse(userID)
+	if err != nil {
+		return fmt.Errorf("Error parsing uuid : ", err)
+	}
+
+	existingUser, err := s.repository.FindByID(ctx, userUUID)
+
+	// Check
+	if existingUser.IsVerified {
+		return fmt.Errorf("User is already verified!")
+	}
+
+	if len(verificationCode) != 6 {
+		return fmt.Errorf("Invalid verification code!")
+	}
+
+	if strings.ToLower(verificationCode) != existingUser.Code {
+		return fmt.Errorf("Verification code does not match!")
+	}
+
+	return nil
+
+}
+
+//==========================================//
+//         USER OPERATIONS                  //
+//==========================================//

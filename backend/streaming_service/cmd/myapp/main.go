@@ -32,9 +32,12 @@ func main() {
 		log.Fatal("Database connection failed!", zap.Error(err))
 	}
 
+	// Now table creation
 	if err := db.RegisterModels(rootCtx,
-		(*streaming.MovieGenre)(nil), (*streaming.Movie)(nil),
-		(*streaming.Genre)(nil)); err != nil {
+		(*streaming.MovieGenre)(nil),
+		(*streaming.Movie)(nil),
+		(*streaming.Genre)(nil),
+	); err != nil {
 		cfg.Logger.Warn("Error creating tables!", zap.Error(err))
 	}
 

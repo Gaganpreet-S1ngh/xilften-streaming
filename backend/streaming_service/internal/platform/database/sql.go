@@ -79,27 +79,29 @@ func (s *sqlDatabase) GetDBClient() *bun.DB {
 
 // RegisterModels implements [SQLDatabase].
 func (s *sqlDatabase) RegisterModels(ctx context.Context, models ...any) error {
-	for _, model := range models {
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
 
-		_, err := s.dbClient.NewCreateTable().
+	// Register all models (important for relations like m2m)
+	for _, model := range models {
+		s.dbClient.RegisterModel(model)
+	}
+
+	// Create tables
+	for _, model := range models {
+		if _, err := s.dbClient.NewCreateTable().
 			Model(model).
 			IfNotExists().
-			Exec(ctx)
+			Exec(ctx); err != nil {
 
-		cancel()
-
-		if err != nil {
-			s.logger.Error("failed to create table",
+			s.logger.Error("failed to init table",
 				zap.String("model", fmt.Sprintf("%T", model)),
 				zap.Error(err),
 			)
 			return err
 		}
-
-		s.logger.Info("table ready",
-			zap.String("model", fmt.Sprintf("%T", model)),
-		)
 	}
+
+	s.logger.Info("database schema initialized")
 	return nil
 }

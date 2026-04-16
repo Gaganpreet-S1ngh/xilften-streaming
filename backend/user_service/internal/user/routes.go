@@ -29,7 +29,7 @@ func NewRoutes(ginEngine *gin.Engine, handler *Handler, auth pkg.Auth) Routes {
 
 // SetupPrivateRoutes implements [Routes].
 func (r *routes) SetupPrivateRoutes() {
-	r.ginEngine.GET("/auth/logout", Authenticate(r.auth), r.handler.Logout)
+	r.ginEngine.GET("/auth/logout", Authenticate(r.auth), r.handler.LogoutHandler)
 }
 
 // SetupPublicRoutes implements [Routes].
@@ -42,7 +42,7 @@ func (r *routes) SetupPublicRoutes() {
 		})
 	})
 
-	r.ginEngine.POST("/auth/register", r.handler.Register)
-	r.ginEngine.POST("/auth/login", r.handler.Login)
+	r.ginEngine.POST("/auth/register", r.handler.RegisterHandler)
+	r.ginEngine.POST("/auth/login", r.handler.LoginHandler)
 
 }

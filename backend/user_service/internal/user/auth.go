@@ -1,4 +1,4 @@
-package pkg
+package user
 
 import (
 	"context"
@@ -25,7 +25,6 @@ const (
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID    string `json:"user_id"`
-	SessionID string `json:"session_id"`
 	Email     string `json:"email"`
 	UserType  string `json:"user_type"`
 	TokenType string `json:"token_type"`
@@ -65,7 +64,7 @@ type Auth interface {
 	HashPassword(password string) (string, error)
 	VerifyPassword(password string, hashed string) error
 
-	GenerateAccessToken(userID string, sessionID string, email string, userType string) (string, error)
+	GenerateAccessToken(userID string, email string, userType string) (string, error)
 	GenerateRefreshToken(userID string, email string, userType string) (string, error)
 
 	VerifyAccessToken(tokenStr string) (*Claims, error)
@@ -79,7 +78,6 @@ type Auth interface {
 	ListActiveSessions(ctx context.Context, userID string) ([]SessionInfo, error)
 
 	GenRandomID() string
-	GenVerificationCode() string
 }
 
 type auth struct {
@@ -115,7 +113,6 @@ func (a *auth) HashPassword(password string) (string, error) {
 
 func (a *auth) VerifyPassword(password string, hashed string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(password))
-	log.Println()
 	if err != nil {
 		return fmt.Errorf("Error verifying the password : %w", err)
 	}
@@ -127,7 +124,7 @@ func (a *auth) VerifyPassword(password string, hashed string) error {
 //      JWT TOKEN GENERATION       //
 //=================================//
 
-func (a *auth) GenerateAccessToken(userID string, sessionID string, email string, userType string) (string, error) {
+func (a *auth) GenerateAccessToken(userID string, email string, userType string) (string, error) {
 	if len(userID) == 0 {
 		return "", fmt.Errorf("Missing (User ID) to create token!")
 	}
@@ -140,7 +137,6 @@ func (a *auth) GenerateAccessToken(userID string, sessionID string, email string
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		UserID:    userID,
-		SessionID: sessionID,
 		Email:     email,
 		UserType:  userType,
 		TokenType: "access",
@@ -153,7 +149,7 @@ func (a *auth) GenerateAccessToken(userID string, sessionID string, email string
 		},
 	})
 
-	return token.SignedString([]byte(a.accessSecret))
+	return token.SignedString(a.accessSecret)
 }
 
 func (a *auth) GenerateRefreshToken(userID string, email string, userType string) (string, error) {
@@ -181,7 +177,7 @@ func (a *auth) GenerateRefreshToken(userID string, email string, userType string
 		},
 	})
 
-	return token.SignedString([]byte(a.refreshSecret))
+	return token.SignedString(a.refreshSecret)
 }
 
 //=================================//
@@ -197,7 +193,7 @@ func (a *auth) VerifyAccessToken(tokenStr string) (*Claims, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
-		return []byte(a.accessSecret), nil
+		return a.accessSecret, nil
 	})
 
 	if err != nil {
@@ -222,7 +218,7 @@ func (a *auth) VerifyRefreshToken(tokenStr string) (*Claims, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", t.Header["alg"])
 		}
-		return []byte(a.refreshSecret), nil
+		return a.refreshSecret, nil
 	})
 
 	if err != nil {
@@ -244,7 +240,7 @@ func (a *auth) VerifyRefreshToken(tokenStr string) (*Claims, error) {
 
 func (a *auth) StoreSession(ctx context.Context, refreshToken string, userID string, sessionID string) error {
 	// Create a session key
-	sessionKey := fmt.Sprintf("session:%s", sessionID)
+	sessionKey := fmt.Sprintf("session:%s", userID)
 	userSessionsKey := fmt.Sprintf("user_sessions:%s", userID)
 
 	// Hash the refresh token (use fast hash)
@@ -467,6 +463,8 @@ func (a *auth) ListActiveSessions(ctx context.Context, userID string) ([]Session
 //     AUTHENTICATION MIDDLEWARE   //
 //=================================//
 
+func (a *auth) Authenticate()
+
 //=================================//
 //         UTILITY FUNCTIONS       //
 //=================================//
@@ -476,13 +474,6 @@ func (a *auth) GenRandomID() string {
 	io.ReadFull(rand.Reader, randStr)
 
 	return hex.EncodeToString(randStr)
-}
-
-func (a *auth) GenVerificationCode() string {
-	buf := make([]byte, 6)
-	io.ReadFull(rand.Reader, buf)
-
-	return hex.EncodeToString(buf)
 }
 
 func (a *auth) hashToken(token string) string {

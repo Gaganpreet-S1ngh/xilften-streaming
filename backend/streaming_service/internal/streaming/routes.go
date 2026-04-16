@@ -39,6 +39,10 @@ func (r *routes) SetupPublicRoutes() {
 		})
 	})
 
+	r.ginEngine.POST("/movies", r.handler.CreateMovieHandler)
 	r.ginEngine.GET("/movies", r.handler.GetMoviesHandler)
+	r.ginEngine.GET("/movies/:id", r.handler.GetMovieHandler)
+	r.ginEngine.PATCH("/movies/:id", r.handler.UpdateMovieHandler)
+	r.ginEngine.DELETE("/movies/:id", r.handler.DeleteMovieHandler)
 
 }
