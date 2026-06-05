@@ -25,6 +25,7 @@ type Repository interface {
 	DeleteGenre(ctx context.Context, genreID uuid.UUID) error
 	FindGenreByID(ctx context.Context, genreID uuid.UUID) (*Genre, error)
 	GetGenres(ctx context.Context, limit int, offset int) ([]*Genre, error)
+	FindGenreByName(ctx context.Context, genreName string) (*Genre, error)
 
 	AddGenreToMovie(ctx context.Context, movieID uuid.UUID, genreID uuid.UUID) error
 	RemoveGenreFromMovie(ctx context.Context, movieID uuid.UUID, genreID uuid.UUID) error
@@ -78,7 +79,7 @@ func (r *repository) DeleteMovie(ctx context.Context, movieID uuid.UUID) error {
 		return r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// 1. Delete the movie
 
-			res, err := r.db.NewDelete().
+			res, err := tx.NewDelete().
 				Model((*Movie)(nil)).
 				Where("_id = ?", movieID).
 				Exec(ctx)
@@ -221,6 +222,9 @@ func (r *repository) FindMovieByImdbID(ctx context.Context, imdbID string) (*Mov
 
 // CreateGenre implements [Repository].
 func (r *repository) CreateGenre(ctx context.Context, genre *Genre) (uuid.UUID, error) {
+
+	genre.GenreName = strings.ToLower(strings.TrimSpace(genre.GenreName))
+
 	err := r.executeWithRetry(ctx, func() error {
 		_, err := r.db.NewInsert().
 			Model(genre).
@@ -240,26 +244,36 @@ func (r *repository) CreateGenre(ctx context.Context, genre *Genre) (uuid.UUID, 
 // DeleteGenre implements [Repository].
 func (r *repository) DeleteGenre(ctx context.Context, genreID uuid.UUID) error {
 	return r.executeWithRetry(ctx, func() error {
-		res, err := r.db.NewDelete().
-			Model((*Movie)(nil)).
-			Where("_id = ?", genreID).
-			Exec(ctx)
+		return r.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			res, err := r.db.NewDelete().
+				Model((*Movie)(nil)).
+				Where("_id = ?", genreID).
+				Exec(ctx)
 
-		if err != nil {
-			return fmt.Errorf("Error deleting genre (%s) : %w", genreID.String(), err)
-		}
+			if err != nil {
+				return fmt.Errorf("Error deleting genre (%s) : %w", genreID.String(), err)
+			}
 
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return fmt.Errorf("Error deleting genre (%s) : %w", genreID.String(), err)
-		}
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return fmt.Errorf("Error deleting genre (%s) : %w", genreID.String(), err)
+			}
 
-		if affected == 0 {
+			if affected == 0 {
+				return nil
+			}
+
+			r.logger.Info("Genre deleted", zap.String("genre_id", genreID.String()))
+
+			if _, err := tx.NewDelete().
+				Model((*MovieGenre)(nil)).
+				Where("genre_id = ?", genreID).
+				Exec(ctx); err != nil {
+				return fmt.Errorf("Genre deleted but failed to remove genre links from movie : %w", err)
+			}
+
 			return nil
-		}
-
-		r.logger.Info("Genre deleted", zap.String("genre_id", genreID.String()))
-		return nil
+		})
 	}, "Delete Genre")
 }
 
@@ -300,6 +314,29 @@ func (r *repository) GetGenres(ctx context.Context, limit int, offset int) ([]*G
 	}
 
 	return genres, nil
+}
+
+// FindGenreByName implements [Repository].
+func (r *repository) FindGenreByName(ctx context.Context, genreName string) (*Genre, error) {
+	genre := new(Genre)
+
+	genreName = strings.ToLower(genreName)
+
+	err := r.executeWithRetry(ctx, func() error {
+		return r.db.NewSelect().
+			Model(genre).
+			Where("LOWER(g.genre_name) = ?", genreName).
+			Scan(ctx)
+	}, "Find Genre By Name")
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("Genre (%s) not found!", genreName)
+		}
+		return nil, fmt.Errorf("Error finding genre with name (%s): %w", genreName, err)
+	}
+
+	return genre, nil
 }
 
 //==========================================//

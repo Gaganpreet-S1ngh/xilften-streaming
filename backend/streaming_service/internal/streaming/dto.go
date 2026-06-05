@@ -30,6 +30,15 @@ type GetMovieResponse struct {
 	UpdatedAt        time.Time         `json:"updated_at"`
 }
 
+type CreateGenreRequest struct {
+	GenreName string `json:"genre_name"`
+}
+
+type GetGenreResponse struct {
+	ID        uuid.UUID `json:"id"`
+	GenreName string    `json:"genre_name"`
+}
+
 type GenreDTO struct {
 	ID        string    `json:"id"`
 	GenreName string    `json:"genre_name"`

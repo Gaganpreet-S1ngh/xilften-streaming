@@ -18,6 +18,10 @@ func NewHandler(svc Service) *Handler {
 	}
 }
 
+//==========================================//
+//             MOVIE FUNCTIONS              //
+//==========================================//
+
 func (h *Handler) CreateMovieHandler(c *gin.Context) {
 	var movie CreateAndUpdateMovieRequest
 
@@ -117,6 +121,70 @@ func (h *Handler) GetMoviesHandler(c *gin.Context) {
 
 	success(c, http.StatusOK, movies)
 }
+
+//==========================================//
+//             GENRE FUNCTIONS              //
+//==========================================//
+
+func (h *Handler) CreateGenreHandler(c *gin.Context) {
+	var genre CreateGenreRequest
+
+	if err := c.ShouldBindJSON(&genre); err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Create timeout context as a child of req context
+
+	genreID, err := h.svc.CreateGenre(c.Request.Context(), genre)
+	if err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	success(c, http.StatusOK, genreID)
+}
+
+func (h *Handler) DeleteGenreHandler(c *gin.Context) {
+	genreID := c.Param("id")
+
+	genreUUID, err := uuid.Parse(genreID)
+	if err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	if err := h.svc.DeleteGenre(c.Request.Context(), genreUUID); err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	success(c, http.StatusOK, "Genre deleted successfully")
+}
+
+func (h *Handler) GetGenresHandler(c *gin.Context) {
+	limitStr := c.Query("limit")
+	offsetStr := c.Query("offset")
+
+	// Convert to int
+
+	limit, _ := strconv.Atoi(limitStr)
+	offset, _ := strconv.Atoi(offsetStr)
+
+	// Create timeout context as a child of req context
+
+	genres, err := h.svc.GetGenres(c.Request.Context(), limit, offset)
+	if err != nil {
+		fail(c, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	success(c, http.StatusOK, genres)
+}
+
+//==========================================//
+//       MOVIE-GENRE FUNCTIONS              //
+//==========================================//
 
 //==========================================//
 //             HELPER FUNCTIONS             //

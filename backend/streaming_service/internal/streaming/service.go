@@ -14,6 +14,10 @@ type Service interface {
 	DeleteMovie(ctx context.Context, movieID uuid.UUID) error
 	GetMovieByID(ctx context.Context, movieID uuid.UUID) (GetMovieResponse, error)
 	GetMovies(ctx context.Context, limit int, offset int) ([]GetMovieResponse, error)
+
+	CreateGenre(ctx context.Context, genreDetails CreateGenreRequest) (uuid.UUID, error)
+	DeleteGenre(ctx context.Context, genreID uuid.UUID) error
+	GetGenres(ctx context.Context, limit int, offset int) ([]GetGenreResponse, error)
 }
 
 type service struct {
@@ -27,6 +31,10 @@ func NewService(repository Repository, logger *zap.Logger) Service {
 		logger:     logger,
 	}
 }
+
+//==========================================//
+//             MOVIE FUNCTIONS              //
+//==========================================//
 
 // CreateMovie implements [Service].
 func (s *service) CreateMovie(ctx context.Context, movieDetails CreateAndUpdateMovieRequest) (uuid.UUID, error) {
@@ -187,3 +195,73 @@ func (s *service) GetMovies(ctx context.Context, limit int, offset int) ([]GetMo
 
 	return response, nil
 }
+
+//==========================================//
+//             GENRE FUNCTIONS              //
+//==========================================//
+
+// CreateGenre implements [Service].
+func (s *service) CreateGenre(ctx context.Context, genreDetails CreateGenreRequest) (uuid.UUID, error) {
+	// See if the genre exists
+
+	existingGenre, _ := s.repository.FindGenreByName(ctx, genreDetails.GenreName)
+
+	if existingGenre != nil {
+		return uuid.Nil, fmt.Errorf("Genre with this genre name already exists!")
+	}
+
+	genre := &Genre{
+		GenreName: genreDetails.GenreName,
+	}
+
+	genreID, err := s.repository.CreateGenre(ctx, genre)
+
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("Failed to create genre : %w", err)
+	}
+
+	return genreID, nil
+
+}
+
+// DeleteGenre implements [Service].
+func (s *service) DeleteGenre(ctx context.Context, genreID uuid.UUID) error {
+	if err := s.repository.DeleteGenre(ctx, genreID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// GetGenres implements [Service].
+func (s *service) GetGenres(ctx context.Context, limit int, offset int) ([]GetGenreResponse, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	if offset < 0 {
+		offset = 0
+	}
+
+	genres, err := s.repository.GetGenres(ctx, limit, offset)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get genres : %w", err)
+	}
+
+	genresResponse := make([]GetGenreResponse, len(genres))
+
+	for _, genre := range genres {
+		genresResponse = append(genresResponse, GetGenreResponse{
+			ID:        genre.ID,
+			GenreName: genre.GenreName,
+		})
+	}
+
+	return genresResponse, nil
+}
+
+//==========================================//
+//       MOVIE-GENRE FUNCTIONS              //
+//==========================================//

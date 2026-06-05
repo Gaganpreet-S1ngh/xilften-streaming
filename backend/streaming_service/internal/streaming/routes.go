@@ -45,4 +45,8 @@ func (r *routes) SetupPublicRoutes() {
 	r.ginEngine.PATCH("/movies/:id", r.handler.UpdateMovieHandler)
 	r.ginEngine.DELETE("/movies/:id", r.handler.DeleteMovieHandler)
 
+	r.ginEngine.GET("/movies/genre", r.handler.GetGenresHandler)
+	r.ginEngine.DELETE("/movies/genre/:id", r.handler.DeleteGenreHandler)
+	r.ginEngine.POST("/movies/genre", r.handler.CreateGenreHandler)
+
 }

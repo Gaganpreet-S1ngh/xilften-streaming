@@ -126,7 +126,7 @@ func (s *service) ForgotPassword(ctx context.Context, userEmail string) error {
 func (s *service) VerifyCode(ctx context.Context, userID string, verificationCode string) error {
 	userUUID, err := uuid.Parse(userID)
 	if err != nil {
-		return fmt.Errorf("Error parsing uuid : ", err)
+		return fmt.Errorf("Error parsing uuid : %w", err)
 	}
 
 	existingUser, err := s.repository.FindByID(ctx, userUUID)
