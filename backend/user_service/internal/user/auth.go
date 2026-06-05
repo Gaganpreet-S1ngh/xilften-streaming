@@ -463,7 +463,7 @@ func (a *auth) ListActiveSessions(ctx context.Context, userID string) ([]Session
 //     AUTHENTICATION MIDDLEWARE   //
 //=================================//
 
-func (a *auth) Authenticate()
+// func (a *auth) Authenticate()
 
 //=================================//
 //         UTILITY FUNCTIONS       //

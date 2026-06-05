@@ -2,7 +2,11 @@ module github.com/Gaganpreet-S1ngh/xilften-user-service
 
 go 1.25.0
 
-require go.uber.org/zap v1.27.1
+require (
+	github.com/uptrace/bun v1.2.18
+	go.uber.org/zap v1.27.1
+	golang.org/x/crypto v0.48.0
+)
 
 require (
 	github.com/bytedance/gopkg v0.1.3 // indirect
@@ -32,7 +36,6 @@ require (
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
-	github.com/uptrace/bun v1.2.18 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
@@ -40,7 +43,6 @@ require (
 	go.opentelemetry.io/otel/trace v1.40.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/arch v0.22.0 // indirect
-	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect

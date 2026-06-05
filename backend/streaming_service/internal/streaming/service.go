@@ -3,8 +3,10 @@ package streaming
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/google/uuid"
+	"github.com/tmc/langchaingo/llms/openai"
 	"go.uber.org/zap"
 )
 
@@ -136,17 +138,35 @@ func (s *service) UpdateMovie(ctx context.Context, movieID uuid.UUID, movieDetai
 		genres[index] = &Genre{ID: id} // bun only needs the PK for m2m inserts
 	}
 
+	// Generate review using openAI Langchain based on ranking
+
+	llm, err := openai.New(
+		openai.WithToken("ollama"),
+		openai.WithBaseURL("http://localhost:11434/v1"),
+		openai.WithModel("phi4-mini"),
+	)
+
+	if err != nil {
+		return fmt.Errorf("Error setting up langchain : %w", err)
+	}
+
+	completion, err := llm.Call(ctx, os.Getenv("BASE_PROMPT_TEMPLATE")+fmt.Sprintf("%+v", movieDetails.Ranking))
+
+	if err != nil {
+		return fmt.Errorf("Error in calling llm : %w", err)
+	}
+
 	movie := &Movie{
 		ImdbID:           movieDetails.ImdbID,
 		Title:            movieDetails.Title,
 		PosterPath:       movieDetails.PosterPath,
 		YoutubeTrailerID: movieDetails.YoutubeTrailerID,
-		AdminReview:      movieDetails.AdminReview,
+		AdminReview:      completion,
 		Ranking:          movieDetails.Ranking,
 		Genres:           genres,
 	}
 
-	err := s.repository.UpdateMovie(ctx, movieID, movie)
+	err = s.repository.UpdateMovie(ctx, movieID, movie)
 	if err != nil {
 		return fmt.Errorf("failed to update movie: %w", err)
 	}
@@ -186,10 +206,11 @@ func (s *service) GetMovies(ctx context.Context, limit int, offset int) ([]GetMo
 	// Keep genres if needed now its not so skip in response and mapping
 	for _, movie := range movies {
 		response = append(response, GetMovieResponse{
-			ID:         movie.ID,
-			Title:      movie.Title,
-			PosterPath: movie.PosterPath,
-			Ranking:    movie.Ranking,
+			ID:          movie.ID,
+			Title:       movie.Title,
+			PosterPath:  movie.PosterPath,
+			AdminReview: movie.AdminReview,
+			Ranking:     movie.Ranking,
 		})
 	}
 
