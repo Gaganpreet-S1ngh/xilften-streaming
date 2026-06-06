@@ -14,6 +14,7 @@ import (
 	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/platform/database"
 	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/platform/httpserver"
 	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/streaming"
+	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/user"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -34,11 +35,25 @@ func main() {
 
 	// Now table creation
 	if err := db.RegisterModels(rootCtx,
+		(*user.UserGenre)(nil),
 		(*streaming.MovieGenre)(nil),
+		(*user.User)(nil),
+		(*user.Genre)(nil),
 		(*streaming.Movie)(nil),
 		(*streaming.Genre)(nil),
 	); err != nil {
 		cfg.Logger.Warn("Error creating tables!", zap.Error(err))
+	}
+
+	// DATABASE (REDIS)
+	redisDB := database.NewRedisDatabase(cfg.Logger)
+
+	if err := redisDB.Connect(rootCtx, cfg.RedisDSN); err != nil {
+		log.Fatal("Redis Database connection failed!", zap.Error(err))
+	}
+
+	if err := redisDB.Ping(rootCtx); err != nil {
+		log.Println(err)
 	}
 
 	// DEPENDENCY INJECTIONS

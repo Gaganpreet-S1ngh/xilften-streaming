@@ -9,10 +9,13 @@ import (
 )
 
 type Config struct {
-	Port        string
-	GinMode     string
-	DatabaseDSN string
-	Logger      *zap.Logger
+	Port          string
+	GinMode       string
+	DatabaseDSN   string
+	RedisDSN      string
+	Logger        *zap.Logger
+	AccessSecret  string
+	RefreshSecret string
 }
 
 func LoadConfig() *Config {
@@ -28,9 +31,12 @@ func LoadConfig() *Config {
 	}
 
 	return &Config{
-		Port:        os.Getenv("PORT"),
-		Logger:      logger,
-		DatabaseDSN: makeDatabaseDSN(),
+		Port:          os.Getenv("PORT"),
+		AccessSecret:  os.Getenv("JWT_ACCESS_SECRET"),
+		RefreshSecret: os.Getenv("JWT_REFRESH_SECRET"),
+		Logger:        logger,
+		DatabaseDSN:   makeDatabaseDSN(),
+		RedisDSN:      makeRedisDSN(),
 	}
 }
 
@@ -49,4 +55,23 @@ func makeDatabaseDSN() string {
 
 	return u.String()
 
+}
+
+func makeRedisDSN() string {
+	scheme := "redis"
+	if os.Getenv("REDIS_TLS") == "true" {
+		scheme = "rediss"
+	}
+
+	u := &url.URL{
+		Scheme: scheme,
+		Host:   os.Getenv("REDIS_HOST") + ":" + os.Getenv("REDIS_PORT"),
+		Path:   "/" + os.Getenv("REDIS_DB"),
+	}
+
+	if pass := os.Getenv("REDIS_PASSWORD"); pass != "" {
+		u.User = url.UserPassword("", pass)
+	}
+
+	return u.String()
 }

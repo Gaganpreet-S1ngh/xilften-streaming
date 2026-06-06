@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	pkg "github.com/Gaganpreet-S1ngh/xilften-user-service/pkg/auth"
+	pkg "github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/pkg/auth"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 )

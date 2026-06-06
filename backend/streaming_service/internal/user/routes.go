@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	pkg "github.com/Gaganpreet-S1ngh/xilften-user-service/pkg/auth"
+	pkg "github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/pkg/auth"
 	"github.com/gin-gonic/gin"
 )
 
