@@ -1,11 +1,9 @@
 package user
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	pkg "github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/pkg/auth"
 	"github.com/gin-gonic/gin"
@@ -29,6 +27,7 @@ func Authenticate(a pkg.Auth) gin.HandlerFunc {
 		// Only accept access token not refresh token
 		if claims.TokenType != "access" {
 			abortUnauthorized(c, "Token type is not permitted on this endpoint!")
+			return
 		}
 
 		// Inject inside gin context
@@ -42,64 +41,8 @@ func Authenticate(a pkg.Auth) gin.HandlerFunc {
 	}
 }
 
-// For stricter operations such that updating profile or placing order or etc we should verify if the token is revoked or not
-// So that even if someone steals the token the damage can be minimized until the access token is valid
-func AuthenticateWithSession(a pkg.Auth) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		tokenStr, err := extractBearerToken(c)
-		if err != nil {
-			abortUnauthorized(c, err.Error())
-			return
-		}
-
-		claims, err := a.VerifyAccessToken(tokenStr)
-		if err != nil {
-			abortUnauthorized(c, err.Error())
-			return
-		}
-
-		// Only accept access token not refresh token
-		if claims.TokenType != "access" {
-			abortUnauthorized(c, "Token type is not permitted on this endpoint!")
-		}
-
-		// Send session ID in header or in JWT?
-		sessionID := strings.TrimSpace(c.GetHeader("X-Session-ID"))
-
-		if len(sessionID) == 0 {
-			abortUnauthorized(c, "Missing Session ID!")
-			return
-		}
-
-		ctx, cancel := context.WithTimeout(c.Request.Context(), 3*time.Second)
-		defer cancel()
-
-		refreshToken := strings.TrimSpace(c.GetHeader("X-Refresh-Token"))
-
-		userSession, err := a.GetSession(ctx, sessionID, refreshToken)
-		if err != nil {
-			abortUnauthorized(c, err.Error())
-		}
-
-		// Cross verify token owner and session matches
-		if userSession.UserID != claims.UserID {
-			abortUnauthorized(c, "Session doesn't match with the authenticated user!")
-			return
-		}
-
-		c.Set("claims", claims)
-		c.Set("user_id", claims.UserID)
-		c.Set("email", claims.Email)
-		c.Set("user_type", claims.UserType)
-		c.Set("session_id", sessionID)
-
-		c.Next()
-
-	}
-}
-
 func RequireRole(roles ...string) gin.HandlerFunc {
-	allowed := make([]string, len(roles))
+	allowed := make([]string, 0, len(roles))
 
 	for _, r := range roles {
 		allowed = append(allowed, strings.ToLower(r))
@@ -121,10 +64,12 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 		for _, allowedUser := range allowed {
 			if ut == allowedUser {
 				c.Next()
+				return
 			}
 		}
 
 		abortForbidden(c, fmt.Sprintf("Access denied: role (%s) is not authorized for this resource", ut))
+
 	}
 
 }
@@ -163,6 +108,7 @@ func abortUnauthorized(c *gin.Context, message string) {
 		"error":   message,
 		"code":    "UNAUTHORIZED",
 	})
+
 }
 
 func abortForbidden(c *gin.Context, message string) {

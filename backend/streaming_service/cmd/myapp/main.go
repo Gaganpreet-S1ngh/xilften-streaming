@@ -10,6 +10,7 @@ import (
 	"syscall"
 	"time"
 
+	pkg "github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/pkg/auth"
 	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/platform/config"
 	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/platform/database"
 	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/platform/httpserver"
@@ -45,30 +46,29 @@ func main() {
 		cfg.Logger.Warn("Error creating tables!", zap.Error(err))
 	}
 
-	// DATABASE (REDIS)
-	redisDB := database.NewRedisDatabase(cfg.Logger)
-
-	if err := redisDB.Connect(rootCtx, cfg.RedisDSN); err != nil {
-		log.Fatal("Redis Database connection failed!", zap.Error(err))
-	}
-
-	if err := redisDB.Ping(rootCtx); err != nil {
-		log.Println(err)
-	}
-
 	// DEPENDENCY INJECTIONS
-	repository := streaming.NewRepository(db.GetDBClient(), cfg.Logger)
-	service := streaming.NewService(repository, cfg.Logger)
-	handler := streaming.NewHandler(service)
+
+	auth := pkg.NewAuth(cfg.AccessSecret, cfg.RefreshSecret)
+
+	streamRepository := streaming.NewRepository(db.GetDBClient(), cfg.Logger)
+	streamService := streaming.NewService(streamRepository, cfg.Logger)
+	streamHandler := streaming.NewHandler(streamService)
+
+	userRepository := user.NewRepository(db.GetDBClient(), cfg.Logger)
+	userService := user.NewService(userRepository, cfg.Logger, auth)
+	userHandler := user.NewHandler(userService)
 
 	// GIN ENGINE
 	gin.SetMode(cfg.GinMode)
 	ginEngine := httpserver.NewGinEngine(cfg.Logger)
-	routes := streaming.NewRoutes(ginEngine, handler)
+	streamRoutes := streaming.NewRoutes(ginEngine, auth, streamHandler)
+	userRoutes := user.NewRoutes(ginEngine, userHandler, auth)
 
 	/* INITIALIZE ROUTES */
 
-	routes.SetupPublicRoutes()
+	streamRoutes.SetupPublicRoutes()
+	userRoutes.SetupPrivateRoutes()
+	userRoutes.SetupPublicRoutes()
 
 	/* START SERVERS */
 

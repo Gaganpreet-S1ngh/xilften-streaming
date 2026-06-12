@@ -58,17 +58,6 @@ func (s *service) Login(ctx context.Context, userDetails UserLoginRequest, devic
 		return UserLoginResponse{}, err
 	}
 
-	refreshToken, err := s.auth.GenerateRefreshToken(existingUser.ID.String(), existingUser.Email, existingUser.UserType)
-
-	if err != nil {
-		return UserLoginResponse{}, err
-	}
-
-	// Store a new user session in the redis (Can add additional device info)
-	if err := s.auth.StoreSession(ctx, refreshToken, existingUser.ID.String(), sessionID); err != nil {
-		return UserLoginResponse{}, err
-	}
-
 	return UserLoginResponse{
 		UserID:      existingUser.ID.String(),
 		Email:       existingUser.Email,
@@ -114,7 +103,8 @@ func (s *service) Register(ctx context.Context, userDetails UserRegisterRequest)
 
 // Logout implements [Service].
 func (s *service) Logout(ctx context.Context, sessionID string, userID string) error {
-	return s.auth.RevokeSession(ctx, sessionID, userID)
+	// return s.auth.RevokeSession(ctx, sessionID, userID)
+	panic("unimplemented")
 }
 
 // ForgotPassword implements [Service].

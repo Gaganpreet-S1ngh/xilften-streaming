@@ -49,6 +49,8 @@ func (h *Handler) LoginHandler(c *gin.Context) {
 		return
 	}
 
+	c.SetCookie("session-token", userDetails.AccessToken, 24*60*60, "/", "", false, true)
+
 	success(c, http.StatusOK, userDetails)
 }
 

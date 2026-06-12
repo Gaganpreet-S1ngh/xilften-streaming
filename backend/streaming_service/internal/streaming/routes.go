@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	pkg "github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/pkg/auth"
+	"github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/user"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,11 +17,13 @@ type Routes interface {
 type routes struct {
 	ginEngine *gin.Engine
 	handler   *Handler
+	auth      pkg.Auth
 }
 
-func NewRoutes(ginEngine *gin.Engine, handler *Handler) Routes {
+func NewRoutes(ginEngine *gin.Engine, auth pkg.Auth, handler *Handler) Routes {
 	return &routes{
 		ginEngine: ginEngine,
+		auth:      auth,
 		handler:   handler,
 	}
 }
@@ -40,7 +44,7 @@ func (r *routes) SetupPublicRoutes() {
 	})
 
 	r.ginEngine.POST("/movies", r.handler.CreateMovieHandler)
-	r.ginEngine.GET("/movies", r.handler.GetMoviesHandler)
+	r.ginEngine.GET("/movies", user.Authenticate(r.auth), user.RequireRole("admin"), r.handler.GetMoviesHandler)
 	r.ginEngine.GET("/movies/:id", r.handler.GetMovieHandler)
 	r.ginEngine.PATCH("/movies/:id", r.handler.UpdateMovieHandler)
 	r.ginEngine.DELETE("/movies/:id", r.handler.DeleteMovieHandler)

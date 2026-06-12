@@ -1,9 +1,6 @@
 package user
 
 import (
-	"net/http"
-	"time"
-
 	pkg "github.com/Gaganpreet-S1ngh/xilften-streaming-service/internal/pkg/auth"
 	"github.com/gin-gonic/gin"
 )
@@ -29,18 +26,11 @@ func NewRoutes(ginEngine *gin.Engine, handler *Handler, auth pkg.Auth) Routes {
 
 // SetupPrivateRoutes implements [Routes].
 func (r *routes) SetupPrivateRoutes() {
-	r.ginEngine.GET("/auth/logout", Authenticate(r.auth), r.handler.LogoutHandler)
+	r.ginEngine.GET("/auth/logout", Authenticate(r.auth), RequireRole("admin"), r.handler.LogoutHandler)
 }
 
 // SetupPublicRoutes implements [Routes].
 func (r *routes) SetupPublicRoutes() {
-
-	r.ginEngine.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "OK",
-			"time":   time.Now().UTC(),
-		})
-	})
 
 	r.ginEngine.POST("/auth/register", r.handler.RegisterHandler)
 	r.ginEngine.POST("/auth/login", r.handler.LoginHandler)
